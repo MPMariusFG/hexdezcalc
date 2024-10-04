@@ -1,1 +1,705 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hexdezcalc V2</title>
+    <style>
+        /* CSS-Variablen für Light und Dark Mode basierend auf System-Theme */
+        :root {
+            --background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #333333;
+            --label-color: #555555;
+            --input-bg: #ffffff;
+            --input-border: #dddddd;
+            --input-focus-border: #4A90E2;
+            --button-bg: linear-gradient(135deg, #6C63FF, #5948e8);
+            --button-hover-bg: linear-gradient(135deg, #5948e8, #4A90E2);
+            --button-text: #ffffff;
+            --error-color: #E74C3C;
+            --info-color: #2980B9;
+            --result-bg: #F8F8F8;
+            --copy-button-color: #4A90E2;
+            --toast-bg: rgba(0, 0, 0, 0.8);
+            --toast-text: #ffffff;
+            --bg-menu-bg: rgba(255, 255, 255, 0.9);
+            --bg-option-border: #dddddd;
+        }
 
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: linear-gradient(135deg, #2c3e50, #4ca1af);
+                --container-bg: rgba(52, 73, 94, 0.95);
+                --text-color: #ecf0f1;
+                --label-color: #bdc3c7;
+                --input-bg: #34495e;
+                --input-border: #7f8c8d;
+                --input-focus-border: #1abc9c;
+                --button-bg: linear-gradient(135deg, #1abc9c, #16a085);
+                --button-hover-bg: linear-gradient(135deg, #16a085, #1abc9c);
+                --button-text: #ffffff;
+                --error-color: #e74c3c;
+                --info-color: #3498db;
+                --result-bg: #3d566e;
+                --copy-button-color: #1abc9c;
+                --toast-bg: rgba(236, 240, 241, 0.9);
+                --toast-text: #2c3e50;
+                --bg-menu-bg: rgba(52, 73, 94, 0.95);
+                --bg-option-border: #7f8c8d;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 700px;
+            animation: fadeIn 1s ease-in-out;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--text-color);
+            font-size: 2em;
+        }
+
+        .background-switch {
+            position: relative;
+        }
+
+        #bg-toggle-button {
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-size: 1em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #bg-toggle-button:hover {
+            background: var(--button-hover-bg);
+        }
+
+        .bg-menu {
+            display: none;
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: var(--bg-menu-bg);
+            border: 1px solid var(--bg-option-border);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .bg-menu.show {
+            display: block;
+        }
+
+        .bg-option {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .bg-option:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .bg-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            margin-right: 10px;
+            border: 1px solid var(--bg-option-border);
+        }
+
+        .bg-option span {
+            color: var(--text-color);
+            font-size: 0.9em;
+        }
+
+        .converter .input-section,
+        .converter .select-section,
+        .converter .result-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--label-color);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+            font-size: 1em;
+            color: var(--text-color);
+        }
+
+        input[type="text"]::placeholder,
+        input[type="number"]::placeholder {
+            color: #aaa;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+            outline: none;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .info-message {
+            color: var(--info-color);
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .select-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .select-group {
+            position: relative;
+        }
+
+        .select-group input[type="number"] {
+            margin-top: 10px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            color: var(--text-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        button:hover {
+            background: var(--button-hover-bg);
+            transform: translateY(-3px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(74, 144, 226, 0.2);
+        }
+
+        .result-section h2 {
+            margin-bottom: 10px;
+            color: var(--text-color);
+            font-size: 1.5em;
+        }
+
+        .result-output-container {
+            position: relative;
+        }
+
+        #result-output {
+            background-color: var(--result-bg);
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 50px;
+            word-wrap: break-word;
+            color: var(--text-color);
+            font-size: 1.1em;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--copy-button-color);
+            font-size: 1.2em;
+            cursor: pointer;
+            display: none;
+            transition: color 0.3s ease;
+        }
+
+        #copy-button:hover {
+            color: var(--button-hover-bg);
+        }
+
+        #copy-button.copied {
+            color: #2ecc71; /* Grün für Erfolg */
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--toast-bg);
+            color: var(--toast-text);
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 1em;
+            opacity: 0;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 1em;
+            }
+
+            #result-output {
+                padding: 15px;
+                font-size: 1em;
+            }
+
+            .background-switch {
+                position: static;
+                margin-top: 10px;
+            }
+
+            .bg-menu {
+                right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Hexdezcalc V2</h1>
+            <div class="background-switch">
+                <button id="bg-toggle-button" aria-label="Hintergrund auswählen">
+                    <span class="button-text">Hintergrund</span>
+                </button>
+                <div id="bg-menu" class="bg-menu">
+                    <div class="bg-option" data-gradient="gradient1">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);"></div>
+                        <span>Sunset</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient2">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);"></div>
+                        <span>Sky Blue</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient3">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);"></div>
+                        <span>Light Blue</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient4">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                        <span>Pink Rose</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient5">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #fccb90 0%, #d57eeb 100%);"></div>
+                        <span>Orange Purple</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient6">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);"></div>
+                        <span>Soft Pink</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient7">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);"></div>
+                        <span>Purple Dream</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient8">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #fbd3e9 0%, #bb377d 100%);"></div>
+                        <span>Magenta</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient9">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);"></div>
+                        <span>Peach</span>
+                    </div>
+                    <div class="bg-option" data-gradient="gradient10">
+                        <div class="bg-preview" style="background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);"></div>
+                        <span>Green Light</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="converter">
+            <div class="input-section">
+                <label for="number-input">Eingabe Zahl:</label>
+                <input type="text" id="number-input" placeholder="Geben Sie eine Zahl ein" aria-describedby="input-error allowed-chars">
+                <small id="input-error" class="error-message"></small>
+                <small id="allowed-chars" class="info-message"></small>
+            </div>
+            <div class="select-section">
+                <div class="select-group">
+                    <label for="source-base">Von Basis:</label>
+                    <select id="source-base" aria-label="Quellbasis auswählen">
+                        <option value="2">Binär (Basis 2)</option>
+                        <option value="8">Oktal (Basis 8)</option>
+                        <option value="10" selected>Dezimal (Basis 10)</option>
+                        <option value="16">Hexadezimal (Basis 16)</option>
+                        <option value="custom">Beliebige Basis</option>
+                    </select>
+                    <input type="number" id="source-custom-base" min="2" max="36" placeholder="Basis (2-36)" style="display: none;" aria-label="Quellbasis eingeben">
+                </div>
+                <div class="select-group">
+                    <label for="target-base">Zu Basis:</label>
+                    <select id="target-base" aria-label="Zielbasis auswählen">
+                        <option value="2">Binär (Basis 2)</option>
+                        <option value="8">Oktal (Basis 8)</option>
+                        <option value="10">Dezimal (Basis 10)</option>
+                        <option value="16">Hexadezimal (Basis 16)</option>
+                        <option value="custom">Beliebige Basis</option>
+                    </select>
+                    <input type="number" id="target-custom-base" min="2" max="36" placeholder="Basis (2-36)" style="display: none;" aria-label="Zielbasis eingeben">
+                </div>
+            </div>
+            <button id="convert-button">Konvertieren</button>
+            <div class="result-section">
+                <h2>Ergebnis:</h2>
+                <div class="result-output-container">
+                    <p id="result-output">--</p>
+                    <button id="copy-button" title="Ergebnis kopieren" aria-label="Ergebnis kopieren">&#128203;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast-Benachrichtigung -->
+    <div id="toast" class="toast">Ergebnis kopiert!</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const numberInput = document.getElementById('number-input');
+            const sourceBaseSelect = document.getElementById('source-base');
+            const targetBaseSelect = document.getElementById('target-base');
+            const sourceCustomBase = document.getElementById('source-custom-base');
+            const targetCustomBase = document.getElementById('target-custom-base');
+            const convertButton = document.getElementById('convert-button');
+            const resultOutput = document.getElementById('result-output');
+            const inputError = document.getElementById('input-error');
+            const allowedCharsInfo = document.getElementById('allowed-chars');
+            const copyButton = document.getElementById('copy-button');
+            const toast = document.getElementById('toast');
+            const bgToggleButton = document.getElementById('bg-toggle-button');
+            const bgMenu = document.getElementById('bg-menu');
+            const bgOptions = document.querySelectorAll('.bg-option');
+
+            // Laden der gespeicherten Einstellungen
+            loadSettings();
+
+            // Event Listener für Basis-Auswahl (Quelle)
+            sourceBaseSelect.addEventListener('change', () => {
+                toggleCustomBase(sourceBaseSelect, sourceCustomBase);
+                updateAllowedCharsInfo();
+            });
+
+            // Event Listener für Basis-Auswahl (Ziel)
+            targetBaseSelect.addEventListener('change', () => {
+                toggleCustomBase(targetBaseSelect, targetCustomBase);
+            });
+
+            // Event Listener für Eingabeänderung, um erlaubte Zeichen anzuzeigen
+            numberInput.addEventListener('input', () => {
+                updateAllowedCharsInfo();
+                inputError.style.display = 'none'; // Versteckt den Fehler bei neuer Eingabe
+            });
+
+            // Event Listener für Konvertieren Button
+            convertButton.addEventListener('click', () => {
+                const inputValue = numberInput.value.trim().toUpperCase();
+                const sourceBase = getBase(sourceBaseSelect, sourceCustomBase);
+                const targetBase = getBase(targetBaseSelect, targetCustomBase);
+
+                // Validierung der Eingabe
+                const validation = validateInput(inputValue, sourceBase);
+                if (!validation.valid) {
+                    inputError.style.display = 'block';
+                    inputError.textContent = validation.message;
+                    resultOutput.textContent = '--';
+                    copyButton.style.display = 'none';
+                    return;
+                } else {
+                    inputError.style.display = 'none';
+                }
+
+                // Umwandlung
+                try {
+                    const decimalValue = parseInt(inputValue, sourceBase);
+                    if (isNaN(decimalValue)) {
+                        throw new Error('Ungültige Zahl für die gegebene Basis.');
+                    }
+                    const convertedValue = convertFromDecimal(decimalValue, targetBase);
+                    resultOutput.textContent = `${inputValue} (Basis ${sourceBase}) = ${convertedValue} (Basis ${targetBase})`;
+                    copyButton.style.display = 'block';
+                    // Speichern der Einstellungen
+                    saveSettings();
+                } catch (error) {
+                    inputError.style.display = 'block';
+                    inputError.textContent = error.message;
+                    resultOutput.textContent = '--';
+                    copyButton.style.display = 'none';
+                }
+            });
+
+            // Event Listener für Copy Button
+            copyButton.addEventListener('click', () => {
+                const text = resultOutput.textContent;
+                if (text && text !== '--') {
+                    navigator.clipboard.writeText(text).then(() => {
+                        // Temporäres Ändern des Icons und Anzeigen der Toast-Benachrichtigung
+                        copyButton.classList.add('copied');
+                        showToast('Ergebnis kopiert!');
+                        setTimeout(() => {
+                            copyButton.classList.remove('copied');
+                        }, 1500);
+                    }).catch(err => {
+                        console.error('Kopieren fehlgeschlagen:', err);
+                        showToast('Kopieren fehlgeschlagen!', true);
+                    });
+                }
+            });
+
+            // Event Listener für Hintergrund-Auswahl Button
+            bgToggleButton.addEventListener('click', () => {
+                bgMenu.classList.toggle('show');
+            });
+
+            // Event Listener für Auswahl eines Hintergrund-Farbverlaufs
+            bgOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const gradient = option.getAttribute('data-gradient');
+                    applyGradient(gradient);
+                    bgMenu.classList.remove('show');
+                    showToast('Hintergrund geändert!');
+                    saveSettings();
+                });
+            });
+
+            // Event Listener zum Schließen des Menüs beim Klicken außerhalb
+            document.addEventListener('click', (event) => {
+                if (!bgToggleButton.contains(event.target) && !bgMenu.contains(event.target)) {
+                    bgMenu.classList.remove('show');
+                }
+            });
+
+            // Funktion zur Anzeige der Toast-Benachrichtigung
+            function showToast(message, isError = false) {
+                toast.textContent = message;
+                toast.style.backgroundColor = isError ? '#e74c3c' : 'var(--toast-bg)';
+                toast.style.color = isError ? '#ffffff' : 'var(--toast-text)';
+                toast.className = 'toast show';
+                setTimeout(() => {
+                    toast.className = toast.className.replace('show', '');
+                }, 3000);
+            }
+
+            // Funktion zur Anwendung des ausgewählten Farbverlaufs
+            function applyGradient(gradient) {
+                const gradients = {
+                    'gradient1': 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+                    'gradient2': 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+                    'gradient3': 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+                    'gradient4': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    'gradient5': 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+                    'gradient6': 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)',
+                    'gradient7': 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+                    'gradient8': 'linear-gradient(135deg, #fbd3e9 0%, #bb377d 100%)',
+                    'gradient9': 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+                    'gradient10': 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)'
+                };
+                document.body.style.background = gradients[gradient];
+            }
+
+            // Funktion zur Anzeige oder Verstecken der benutzerdefinierten Basis-Eingabefelder
+            function toggleCustomBase(selectElement, customInput) {
+                if (selectElement.value === 'custom') {
+                    customInput.style.display = 'block';
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.value = '';
+                }
+            }
+
+            // Funktion zur Basis-Ermittlung
+            function getBase(selectElement, customInput) {
+                if (selectElement.value === 'custom') {
+                    const customBase = parseInt(customInput.value, 10);
+                    if (isNaN(customBase) || customBase < 2 || customBase > 36) {
+                        return null;
+                    }
+                    return customBase;
+                }
+                return parseInt(selectElement.value, 10);
+            }
+
+            // Validierungsfunktion
+            function validateInput(value, base) {
+                if (!value) {
+                    return { valid: false, message: 'Bitte geben Sie eine Zahl ein.' };
+                }
+                if (!base || base < 2 || base > 36) {
+                    return { valid: false, message: 'Die Basis muss eine Zahl zwischen 2 und 36 sein.' };
+                }
+
+                // Bestimmen der erlaubten Zeichen basierend auf der Basis
+                let allowedChars;
+                if (base <= 10) {
+                    allowedChars = `0-${base - 1}`;
+                } else {
+                    const lastChar = String.fromCharCode(55 + base - 1); // 'A' = 65
+                    allowedChars = `0-9A-${lastChar}`;
+                }
+
+                const regex = new RegExp(`^[${allowedChars}]+$`, 'i');
+                if (!regex.test(value)) {
+                    return { valid: false, message: `Ungültige Zeichen für Basis ${base}. Erlaubt sind: ${formatAllowedChars(allowedChars)}` };
+                }
+
+                return { valid: true, message: '' };
+            }
+
+            // Funktion zur Umwandlung von Dezimal zu Zielbasis
+            function convertFromDecimal(number, base) {
+                return number.toString(base).toUpperCase();
+            }
+
+            function saveSettings() {
+                const settings = {
+                    number: numberInput.value,
+                    sourceBase: sourceBaseSelect.value,
+                    sourceCustomBase: sourceBaseSelect.value === 'custom' ? sourceCustomBase.value : '',
+                    targetBase: targetBaseSelect.value,
+                    targetCustomBase: targetBaseSelect.value === 'custom' ? targetCustomBase.value : '',
+                    background: document.body.style.background || getComputedStyle(document.body).background
+                };
+                localStorage.setItem('converterSettings', JSON.stringify(settings));
+            }
+
+            function loadSettings() {
+                const settings = JSON.parse(localStorage.getItem('converterSettings'));
+                if (settings) {
+                    numberInput.value = settings.number || '';
+                    sourceBaseSelect.value = settings.sourceBase || '10';
+                    if (sourceBaseSelect.value === 'custom') {
+                        sourceCustomBase.style.display = 'block';
+                        sourceCustomBase.value = settings.sourceCustomBase || '';
+                    }
+                    targetBaseSelect.value = settings.targetBase || '10';
+                    if (targetBaseSelect.value === 'custom') {
+                        targetCustomBase.style.display = 'block';
+                        targetCustomBase.value = settings.targetCustomBase || '';
+                    }
+                    if (settings.background) {
+                        document.body.style.background = settings.background;
+                    }
+                    updateAllowedCharsInfo();
+                }
+            }
+
+            function updateAllowedCharsInfo() {
+                const sourceBase = getBase(sourceBaseSelect, sourceCustomBase);
+                if (!sourceBase || sourceBase < 2 || sourceBase > 36) {
+                    allowedCharsInfo.textContent = '';
+                    return;
+                }
+
+                let allowedChars;
+                if (sourceBase <= 10) {
+                    allowedChars = `0-${sourceBase - 1}`;
+                } else {
+                    const lastChar = String.fromCharCode(55 + sourceBase - 1);
+                    allowedChars = `0-9A-${lastChar}`;
+                }
+
+                allowedCharsInfo.textContent = `Erlaubte Zeichen für Basis ${sourceBase}: ${formatAllowedChars(allowedChars)}`;
+            }
+
+            function formatAllowedChars(chars) {
+                if (chars.includes('A-')) {
+                    const parts = chars.split('A-');
+                    return `${parts[0].replace('-', ' bis ')} und A bis ${parts[1]}`;
+                }
+                return chars.replace('-', ' bis ');
+            }
+        });
+    </script>
+</body>
+</html>
